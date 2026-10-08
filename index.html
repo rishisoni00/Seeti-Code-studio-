@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8b5cf6">
+<title>Seeti - Code Editor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+
+<!-- Puter.js -->
+<script src="https://js.puter.com/v2/"></script>
+
+<style>
+:root{--accent:#8b5cf6;--border:rgba(255,255,255,.12);--bg:#0f0f14;--muted:#a1a1aa}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--border);background:#0b0b10}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700}
+.brand-dot{width:26px;height:26px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
+.glass-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-size:13px;font-family:inherit}
+.glass-btn:hover{background:rgba(255,255,255,.12)}
+.glass-btn:disabled{opacity:.5;cursor:not-allowed}
+.glass-btn svg{width:15px;height:15px}
+.btn-accent{background:var(--accent);border-color:var(--accent);font-weight:600}
+.btn-accent:hover{background:#7c3aed}
+.user-chip{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:0 4px}
+.user-chip svg{width:15px;height:15px}
+.main{display:flex;height:calc(100vh - 56px)}
+#editor{flex:1;min-width:0;height:100%}
+#previewWrap{flex:1;min-width:0;display:none;flex-direction:column;border-left:1px solid var(--border)}
+#previewWrap.show{display:flex}
+.preview-bar{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)}
+#preview{flex:1;border:0;background:#fff;width:100%}
+.CodeMirror{height:100% !important;font-size:14px}
+#aiPanel{position:fixed;right:12px;top:68px;bottom:12px;width:380px;max-width:calc(100vw - 24px);z-index:999;background:#15151f;border:1px solid var(--border);border-radius:16px;transform:translateX(120%);transition:transform .3s;display:flex;flex-direction:column;padding:16px}
+#aiPanel.open{transform:translateX(0)}
+.panel-head{display:flex;justify-content:space-between;align-items:center}
+.panel-head h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+#aiPrompt{width:100%;height:84px;margin:12px 0;padding:12px;border-radius:12px;background:rgba(0,0,0,.35);color:#fff;border:1px solid var(--border);resize:none;font-family:inherit;font-size:13px}
+#aiPrompt:focus{outline:none;border-color:var(--accent)}
+#aiResponse{flex:1;overflow:auto;margin-top:12px;padding:12px;background:rgba(0,0,0,.35);border-radius:12px;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;border:1px solid var(--border);color:#d4d4d8}
+#signinGate{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--muted);font-size:13px;padding:20px}
+#signinGate svg.big{width:36px;height:36px;color:var(--accent)}
+.hidden{display:none !important}
+@media (max-width:760px){.main{flex-direction:column}#previewWrap{border-left:0;border-top:1px solid var(--border)}.btn-label{display:none}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand"><span class="brand-dot"><i data-lucide="code-2" style="width:15px;height:15px"></i></span>Seeti Editor</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="userChip" class="user-chip hidden"><i data-lucide="user-circle"></i><span id="userName"></span></span>
+    <button id="signInBtn" class="glass-btn" onclick="signIn()"><i data-lucide="log-in"></i><span class="btn-label">Sign in</span></button>
+    <button id="signOutBtn" class="glass-btn hidden" onclick="signOut()" title="Sign out"><i data-lucide="log-out"></i></button>
+    <button class="glass-btn btn-accent" onclick="openAI()"><i data-lucide="sparkles"></i><span class="btn-label">Seeti AI</span></button>
+    <button class="glass-btn" onclick="run()"><i data-lucide="play"></i><span class="btn-label">Run</span></button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="editor"></div>
+  <div id="previewWrap">
+    <div class="preview-bar">
+      <span>Preview</span>
+      <button class="glass-btn" style="padding:4px 8px" onclick="closePreview()"><i data-lucide="x"></i></button>
+    </div>
+    <iframe id="preview" sandbox="allow-scripts allow-modals allow-forms"></iframe>
+  </div>
+</div>
+
+<div id="aiPanel">
+  <div class="panel-head">
+    <h3><i data-lucide="sparkles" style="width:16px;height:16px;color:var(--accent)"></i>Seeti AI</h3>
+    <button class="glass-btn" style="padding:6px" onclick="openAI()"><i data-lucide="x"></i></button>
+  </div>
+
+  <!-- Shown when signed out -->
+  <div id="signinGate">
+    <i data-lucide="lock" class="big"></i>
+    <div>Seeti AI use karne ke liye sign in karo.<br>Sign in to use Seeti AI.</div>
+    <button class="glass-btn btn-accent" onclick="signIn()"><i data-lucide="log-in"></i>Sign in with Puter</button>
+  </div>
+
+  <!-- Shown when signed in -->
+  <div id="aiTools" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <textarea id="aiPrompt" placeholder="Ex: Make a login page with glassmorphism, calculator, portfolio..."></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="glass-btn ai-btn" onclick="askAI('make')"><i data-lucide="wand-2"></i>Generate</button>
+      <button class="glass-btn ai-btn" onclick="askAI('fix')"><i data-lucide="bug"></i>Fix Code</button>
+      <button class="glass-btn ai-btn" onclick="askAI('explain')"><i data-lucide="book-open"></i>Explain</button>
+    </div>
+    <div id="aiResponse">AI yaha jawab dega...</div>
+    <button id="applyBtn" class="glass-btn btn-accent" style="margin-top:8px;justify-content:center" onclick="applyAICode()"><i data-lucide="arrow-down-to-line"></i>Apply to Editor</button>
+  </div>
+</div>
+
+<script type="module">
+import { createIcons, icons } from 'https://cdn.jsdelivr.net/npm/lucide@latest/+esm';
+createIcons({ icons });
+</script>
+
+<script>
+const cm = CodeMirror(document.getElementById('editor'), {
+  mode: 'htmlmixed', theme: 'material-darker', lineNumbers: true, lineWrapping: true,
+  value: '<h1>Hello Seeti</h1>\n<p>Edit me and press Run.</p>'
+});
+let lastAIResult = "";
+let lastMode = "";
+const $ = id => document.getElementById(id);
+
+/* ---------- Auth (Puter) ---------- */
+async function refreshAuth(){
+  const signedIn = puter.auth.isSignedIn();
+  $('signInBtn').classList.toggle('hidden', signedIn);
+  $('signOutBtn').classList.toggle('hidden', !signedIn);
+  $('userChip').classList.toggle('hidden', !signedIn);
+  $('signinGate').style.display = signedIn ? 'none' : 'flex';
+  $('aiTools').style.display = signedIn ? 'flex' : 'none';
+  if(signedIn){
+    try{ const u = await puter.auth.getUser(); $('userName').textContent = u.username; }catch(e){}
+  }
+}
+async function signIn(){
+  try{ await puter.auth.signIn(); }catch(e){ console.warn('Sign in cancelled', e); }
+  refreshAuth();
+}
+function signOut(){ puter.auth.signOut(); refreshAuth(); }
+
+/* ---------- Run / Preview ---------- */
+function run(){
+  $('previewWrap').classList.add('show');
+  $('preview').srcdoc = cm.getValue();
+  setTimeout(() => cm.refresh(), 0);
+}
+function closePreview(){ $('previewWrap').classList.remove('show'); setTimeout(() => cm.refresh(), 0); }
+document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='Enter'){ e.preventDefault(); run(); } });
+
+function openAI(){ $('aiPanel').classList.toggle('open'); }
+
+/* Remove ```html ... ``` fences the AI often adds */
+function extractCode(text){
+  const m = text.match(/```[a-zA-Z]*\n?([\s\S]*?)```/);
+  return (m ? m[1] : text).trim();
+}
+
+function setBusy(b){
+  document.querySelectorAll('.ai-btn').forEach(x => x.disabled = b);
+  $('applyBtn').disabled = b;
+}
+
+/* ---------- AI (Puter) ---------- */
+async function askAI(mode){
+  if(!puter.auth.isSignedIn()){ refreshAuth(); return; }
+  const prompt = $('aiPrompt').value.trim();
+  const code = cm.getValue();
+  if(!prompt && mode==='make'){ alert("Pehle prompt likho!"); return; }
+
+  const q = mode==='fix'
+    ? `Fix this code. Return ONLY the complete fixed code, no explanation.\n\n${code}\n\nUser says: ${prompt || 'fix any bugs'}`
+    : mode==='explain'
+    ? `Explain this code in simple Hindi + English (Hinglish):\n\n${code}`
+    : `Create a complete single-file HTML page (HTML, CSS and JS in one file) for: ${prompt}. Return ONLY the code.`;
+
+  lastMode = mode;
+  const out = $('aiResponse');
+  out.textContent = "Seeti AI soch raha hai...";
+  setBusy(true);
+
+  try{
+    const stream = await puter.ai.chat(q, { model: "claude-sonnet-4", stream: true });
+    let full = "";
+    for await (const part of stream){
+      if(part?.text){ full += part.text; out.textContent = full; out.scrollTop = out.scrollHeight; }
+    }
+    lastAIResult = full;
+  }catch(e){
+    console.error(e);
+    out.textContent = "Error: " + (e?.message || e?.error?.message || JSON.stringify(e));
+  }finally{
+    setBusy(false);
+  }
+}
+
+function applyAICode(){
+  if(!lastAIResult){ alert("Pehle AI se kuch generate karo"); return; }
+  if(lastMode==='explain'){ alert("Explanation ko editor me apply nahi kar sakte. Generate ya Fix use karo."); return; }
+  cm.setValue(extractCode(lastAIResult));
+  openAI();
+  run();
+}
+
+refreshAuth();
+</script>
+</body>
+  </html>
