@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Seeti Code Studio</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0f0f14">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.min.css">
+<style>
+:root{--glass:rgba(255,255,255,.08);--border:rgba(255,255,255,.18);--accent:#8b5cf6;--accent2:#06ffa5;--bg:#0f0f14}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100vh;width:100vw;overflow:hidden;font-family:system-ui,monospace;background:radial-gradient(1200px 600px at 10% -10%,#7c3aed 0%,transparent 60%),radial-gradient(1000px 500px at 90% 10%,#06b6d4 0%,transparent 60%),var(--bg);color:#e8e8ef;display:flex;flex-direction:column}
+#top{height:58px;z-index:10;background:var(--glass);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:0 10px;overflow-x:auto}
+.logo{font-weight:900;font-size:16px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:6px}
+.glass-btn,.glass-select{background:var(--glass);border:1px solid var(--border);color:#fff;padding:7px 12px;border-radius:10px;font-size:11px;cursor:pointer;flex-shrink:0}
+.glass-btn.active{background:linear-gradient(135deg,var(--accent),#5b21b6)}
+#wrap{display:flex;flex:1;overflow:hidden;gap:10px;padding:10px}
+.panel{background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--border);border-radius:18px;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+#left{width:50%}#right{width:50%}#left.full{width:100%}#left.full-hide{display:none}#right.full{width:100%}#right.full-hide{display:none}
+#tabs{display:flex;background:rgba(0,0,0,.25);border-bottom:1px solid var(--border)}
+.tab{flex:1;text-align:center;padding:10px;font-size:12px;opacity:.6;cursor:pointer;font-weight:600}
+.tab.active{opacity:1;background:rgba(139,92,246,.18);color:var(--accent2);border-bottom:2px solid var(--accent2)}
+#editor{flex:1;overflow:hidden}.CodeMirror{height:100%!important;background:transparent!important;font-size:13.5px}
+#symbolBar{display:flex;gap:5px;padding:6px;background:rgba(0,0,0,.35);border-top:1px solid var(--border);overflow-x:auto}
+.sym{padding:6px 10px;background:var(--glass);border:1px solid var(--border);border-radius:8px;color:#fff;font-size:12px;cursor:pointer}
+#previewHead{height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 12px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);font-size:11px}
+#preview{flex:1;border:none;background:#fff;width:100%}
+#console{height:110px;background:#0a0a0f;color:#0f0;font-family:monospace;font-size:11px;padding:8px;overflow:auto;display:none;white-space:pre-wrap;border-top:1px solid var(--border)}
+#console.show{display:block}
+#history{position:fixed;left:12px;top:70px;bottom:12px;width:340px;z-index:20;background:rgba(18,18,28,.98);border:1px solid var(--border);border-radius:18px;transform:translateX(-115%);transition:.3s;padding:14px;overflow:auto}
+#history.open{transform:translateX(0)}
+.hist-item{padding:9px;border:1px solid var(--border);background:var(--glass);border-radius:10px;margin-bottom:7px;cursor:pointer}
+@media(max-width:900px){#wrap{flex-direction:column}#left,#right{width:100%;height:50%}}
+</style>
+</head>
+<body>
+<div id="top">
+<div class="logo"><img src="./icon.svg" width="26" height="26" style="border-radius:6px"> SEETI</div>
+<button class="glass-btn" onclick="toggleHistory()">☰</button>
+<select id="project" class="glass-select" onchange="loadProject()"></select>
+<button class="glass-btn" onclick="newProject()">+ New</button>
+<button class="glass-btn" onclick="toggleSymbolBar()">{ }</button>
+<button id="btnSize" class="glass-btn" onclick="toggleSize()">⛶</button>
+<button class="glass-btn active" onclick="runPreview()">▶ Run</button>
+</div>
+
+<div id="wrap">
+<div id="left" class="panel">
+<div id="tabs">
+<div class="tab active" id="tab-html" onclick="switchLang('html')">HTML</div>
+<div class="tab" id="tab-css" onclick="switchLang('css')">CSS</div>
+<div class="tab" id="tab-js" onclick="switchLang('js')">JS</div>
+</div>
+<div id="editor"></div>
+<div id="symbolBar">
+<button class="sym" onclick="ins('<>',1)">< ></button>
+<button class="sym" onclick="ins('{}',1)">{ }</button>
+<button class="sym" onclick="ins('()',1)">( )</button>
+<button class="sym" onclick="ins('\"\"',1)">"</button>
+<button class="sym" onclick="ins('\'\'',1)">' </button>
+<button class="sym" onclick="ins(';')">;</button>
+<button class="sym" onclick="ins('=')">=</button>
+<button class="sym" onclick="ins(':')">:</button>
+</div>
+</div>
+<div id="right" class="panel">
+<div id="previewHead"><span>Live Preview • 100% Offline</span><button class="glass-btn" style="padding:3px 8px" onclick="toggleConsole()">Console</button></div>
+<iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+<div id="console"></div>
+</div>
+</div>
+
+<!-- PERMANENT APP CARD -->
+<div id="history">
+<div style="background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(6,255,165,.16));border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:12px">
+<div style="display:flex;align-items:center;gap:10px">
+<img src="./icon.svg" width="40" height="40" style="border-radius:10px;background:#0f0f14">
+<div><b style="font-size:13px">Seeti Code Studio</b><br><small id="appStatus" style="opacity:.7;font-size:10px">Checking...</small></div>
+</div>
+<div style="margin-top:12px;display:grid;gap:7px">
+<button id="permInstallBtn" class="glass-btn" onclick="installPWA()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#06ffa5);color:#000;font-weight:900;display:none;padding:10px">📲 Install App</button>
+<button id="permUpdateBtn" class="glass-btn" onclick="updatePWA()" style="width:100%;background:#06ffa5;color:#000;font-weight:800;display:none;padding:10px">⬇️ Update App</button>
+<div id="permInstalled" style="display:none;text-align:center;padding:8px;background:rgba(6,255,165,.18);border-radius:10px;font-size:11px">✅ Installed • Offline Ready</div>
+</div>
+<small style="opacity:.5;font-size:9px;margin-top:8px;display:block">v16 Lite • HTML CSS JS Only • 100% Offline</small>
+</div>
+<h3>📁 Projects</h3><div id="histList" style="margin-top:10px"></div><button class="glass-btn" style="width:100%;margin-top:12px" onclick="toggleHistory()">Close</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/htmlmixed/htmlmixed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/css/css.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script>
+// PWA v16
+let deferredPrompt=null,swReg=null;
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(r=>{
+    swReg=r;
+    r.addEventListener('updatefound',()=>{
+      document.getElementById('permUpdateBtn').style.display='block';
+      document.getElementById('appStatus').textContent='⬇️ Update available!';
+    });
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;checkAppStatus();});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;checkAppStatus();});
+async function installPWA(){if(deferredPrompt){deferredPrompt.prompt();let c=await deferredPrompt.userChoice;if(c.outcome==='accepted')deferredPrompt=null;checkAppStatus();}else alert('Menu ⋮ > Add to Home Screen / Install App');}
+function updatePWA(){if(swReg&&swReg.waiting)swReg.waiting.postMessage({type:'SKIP_WAITING'});else location.reload();}
+function checkAppStatus(){
+  let standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  let s=document.getElementById('appStatus'),ib=document.getElementById('permInstallBtn'),ok=document.getElementById('permInstalled');
+  if(!s)return;
+  if(standalone){s.textContent='Installed • v16 Lite • Offline';ib.style.display='none';ok.style.display='block';}
+  else{s.textContent='Not installed • Tap to install';ib.style.display='block';ok.style.display='none';}
+}
+
+// EDITOR - Only 3 langs
+const BOILERS={
+ html:`<div class="hero">\n <h1>Seeti 💨</h1>\n <p>Fast • Offline • Code</p>\n <button onclick="sayHi()">Click Me</button>\n</div>`,
+ css:`body{margin:0;height:100vh;display:grid;place-items:center;background:#0f0f14;color:#fff;font-family:system-ui}\n.hero{text-align:center}\nh1{font-size:48px;background:linear-gradient(90deg,#8b5cf6,#06ffa5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}\nbutton{margin-top:16px;padding:10px 18px;border-radius:10px;border:none;background:#8b5cf6;color:#fff;font-weight:700;cursor:pointer}`,
+ js:`function sayHi(){\n console.log("Seeti is working offline! 💨");\n alert("Hello from Seeti!");\n}`
+};
+let DB=JSON.parse(localStorage.getItem('seeti_lite')||`{"projects":{"Welcome":{"parts":${JSON.stringify(BOILERS)},"time":${Date.now()}}},"current":"Welcome"}`);
+function saveDB(){localStorage.setItem('seeti_lite',JSON.stringify(DB));renderAll();}
+let active='html';
+let cm=CodeMirror(document.getElementById('editor'),{value:DB.projects[DB.current].parts[active],mode:'htmlmixed',theme:'material-darker',lineNumbers:true,autoCloseBrackets:true});
+cm.on('change',()=>{DB.projects[DB.current].parts[active]=cm.getValue();DB.projects[DB.current].time=Date.now();saveDB();autoRun();});
+function ins(t,m){let c=cm.getCursor();cm.replaceRange(t,c);if(m)cm.setCursor({line:c.line,ch:c.ch+1});cm.focus();}
+function toggleSymbolBar(){let b=document.getElementById('symbolBar');b.style.display=b.style.display==='none'?'flex':'none';}
+let sizeMode='normal';function toggleSize(){let L=document.getElementById('left'),R=document.getElementById('right'),B=document.getElementById('btnSize');if(sizeMode==='normal'){sizeMode='code';L.className='panel full';R.className='panel full-hide';B.textContent='👁';}else if(sizeMode==='code'){sizeMode='preview';L.className='panel full-hide';R.className='panel full';B.textContent='📝';}else{sizeMode='normal';L.className='panel';R.className='panel';B.textContent='⛶';}setTimeout(()=>cm.refresh(),100);}
+function toggleConsole(){document.getElementById('console').classList.toggle('show');}
+function autoRun(){
+  let p=DB.projects[DB.current].parts;
+  let frame=document.getElementById('preview');
+  frame.srcdoc=`<!DOCTYPE html><html><head><style>${p.css||''}</style></head><body>${p.html||''}<script>
+  (function(){let c=console.log;console.log=function(...a){parent.postMessage({type:'log',msg:a.join(' ')},'*');c(...a)};window.onerror=function(m,s,l){parent.postMessage({type:'err',msg:m+' at line '+l},'*')};})();\n${p.js||''}<\/script></body></html>`;
+}
+window.addEventListener('message',e=>{
+  let con=document.getElementById('console');
+  if(e.data.type==='log'){con.classList.add('show');con.textContent+='> '+e.data.msg+'\n';}
+  if(e.data.type==='err'){con.classList.add('show');con.textContent+='❌ '+e.data.msg+'\n';}
+});
+function runPreview(){autoRun();}
+function switchLang(k){
+  DB.projects[DB.current].parts[active]=cm.getValue();
+  active=k;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+k).classList.add('active');
+  let mode=k==='html'?'htmlmixed':k==='css'?'css':'javascript';
+  cm.setOption('mode',mode);
+  cm.setValue(DB.projects[DB.current].parts[k]||BOILERS[k]||'');
+  cm.refresh();autoRun();saveDB();
+}
+function newProject(){let n=prompt("Project name?","Project "+(Object.keys(DB.projects).length+1));if(!n)return;DB.projects[n]={parts:{...BOILERS},time:Date.now()};DB.current=n;renderAll();switchLang('html');}
+function loadProject(){DB.current=document.getElementById('project').value;switchLang('html');}
+function renderAll(){let s=document.getElementById('project');s.innerHTML=Object.keys(DB.projects).map(k=>`<option ${k===DB.current?'selected':''}>${k}</option>`).join('');let arr=Object.entries(DB.projects).sort((a,b)=>b[1].time-a[1].time);document.getElementById('histList').innerHTML=arr.map(([k,v])=>`<div class="hist-item" onclick="openHist('${k}')"><b>${k}</b><br><small>${new Date(v.time).toLocaleString()}</small></div>`).join('');}
+function openHist(k){DB.current=k;toggleHistory();loadProject();}
+function toggleHistory(){document.getElementById('history').classList.toggle('open');if(document.getElementById('history').classList.contains('open'))checkAppStatus();}
+renderAll();autoRun();setTimeout(checkAppStatus,800);
+</script>
+</body>
+                                                                                                                                     </html>
