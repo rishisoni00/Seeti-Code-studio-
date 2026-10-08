@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Seeti Code Studio</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0f0f14">
+<script src="https://js.puter.com/v2/"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.min.css">
+<style>
+:root{--glass:rgba(255,255,255,.08);--border:rgba(255,255,255,.18);--accent:#8b5cf6;--accent2:#06ffa5;--bg:#0f0f14}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100vh;width:100vw;overflow:hidden;font-family:system-ui,monospace;background:radial-gradient(1200px 600px at 10% -10%,#7c3aed 0%,transparent 60%),radial-gradient(1000px 500px at 90% 10%,#06b6d4 0%,transparent 60%),var(--bg);color:#e8e8ef;display:flex;flex-direction:column}
+#top{height:58px;z-index:10;background:var(--glass);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:0 10px;overflow-x:auto}
+.logo{font-weight:900;font-size:16px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:6px}
+.glass-btn,.glass-select{background:var(--glass);border:1px solid var(--border);color:#fff;padding:7px 10px;border-radius:10px;font-size:11px;cursor:pointer;flex-shrink:0}
+.glass-btn.active{background:linear-gradient(135deg,var(--accent),#5b21b6)}
+#wrap{display:flex;flex:1;overflow:hidden;gap:10px;padding:10px}
+.panel{background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--border);border-radius:18px;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+#left{width:50%}#right{width:50%}#left.full{width:100%}#left.full-hide{display:none}#right.full{width:100%}#right.full-hide{display:none}
+#tabs{display:flex;background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:9px 12px;font-size:11px;opacity:.6;cursor:pointer;white-space:nowrap}
+.tab.active{opacity:1;background:rgba(139,92,246,.18);color:var(--accent2);border-bottom:2px solid var(--accent2)}
+#editor{flex:1;overflow:hidden}.CodeMirror{height:100%!important;background:transparent!important;font-size:13px}
+#symbolBar{display:flex;gap:5px;padding:6px;background:rgba(0,0,0,.35);border-top:1px solid var(--border);overflow-x:auto}
+.sym{padding:5px 9px;background:var(--glass);border:1px solid var(--border);border-radius:7px;color:#fff;font-size:11px;cursor:pointer}
+#previewHead{height:38px;display:flex;justify-content:space-between;align-items:center;padding:0 10px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border);font-size:11px}
+#preview{flex:1;border:none;background:#fff;width:100%}
+#console{height:120px;background:#0a0a0f;color:#0f0;font-size:11px;padding:8px;overflow:auto;display:none;white-space:pre-wrap}
+#console.show{display:block}
+#history{position:fixed;left:12px;top:70px;bottom:12px;width:320px;z-index:20;background:rgba(18,18,28,.97);border:1px solid var(--border);border-radius:18px;transform:translateX(-115%);transition:.3s;padding:14px;overflow:auto}
+#history.open{transform:translateX(0)}
+.hist-item{padding:9px;border:1px solid var(--border);background:var(--glass);border-radius:10px;margin-bottom:7px;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:99}
+.modal-box{width:min(420px,93vw);background:#1e1e28;border:1px solid var(--border);border-radius:18px;padding:16px}
+.opt{padding:10px;border-radius:10px;cursor:pointer;display:flex;justify-content:space-between}
+.opt:hover{background:rgba(255,255,255,.08)}
+@media(max-width:900px){#wrap{flex-direction:column}#left,#right{width:100%;height:50%}}
+</style>
+</head>
+<body>
+<div id="top">
+<div class="logo"><img src="./icon.svg" width="26" height="26" style="border-radius:6px"> SEETI</div>
+<button class="glass-btn" onclick="toggleHistory()">☰</button>
+<button class="glass-btn" onclick="openLangModal()">🌐 <span id="curLangTop">HTML</span></button>
+<select id="project" class="glass-select" onchange="loadProject()"></select>
+<button class="glass-btn" onclick="newProject()">+ New</button>
+<button class="glass-btn" onclick="toggleSymbolBar()">{ }</button>
+<button id="btnSize" class="glass-btn" onclick="toggleSize()">⛶</button>
+<button class="glass-btn active" id="runBtn" onclick="runPreview()">▶ Run HTML</button>
+</div>
+
+<div id="wrap">
+<div id="left" class="panel"><div id="tabs"></div><div id="editor"></div><div id="symbolBar">
+<button class="sym" onclick="ins('{}',1)">{ }</button><button class="sym" onclick="ins('()',1)">( )</button><button class="sym" onclick="ins('[]',1)">[ ]</button><button class="sym" onclick="ins('<>',1)">< ></button><button class="sym" onclick="ins('\"\"',1)">"</button><button class="sym" onclick="ins(';')">;</button><button class="sym" onclick="ins('=')">=</button>
+</div></div>
+<div id="right" class="panel"><div id="previewHead"><span id="langBadge">HTML</span><button class="glass-btn" style="padding:2px 7px" onclick="toggleConsole()">Console</button></div><iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe><div id="console"></div></div>
+</div>
+
+<!-- PERMANENT INSTALL CARD -->
+<div id="history">
+<div style="background:linear-gradient(135deg,rgba(139,92,246,.22),rgba(6,255,165,.16));border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:12px">
+<div style="display:flex;align-items:center;gap:10px"><img src="./icon.svg" width="36" height="36" style="border-radius:8px"><div><b style="font-size:13px">Seeti Code Studio</b><br><small id="appStatus" style="opacity:.7;font-size:10px">Checking...</small></div></div>
+<div style="margin-top:10px;display:grid;gap:6px">
+<button id="permInstallBtn" class="glass-btn" onclick="installPWA()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#06ffa5);color:#000;font-weight:900;display:none">📲 Install App</button>
+<button id="permUpdateBtn" class="glass-btn" onclick="updatePWA()" style="width:100%;background:#06ffa5;color:#000;font-weight:800;display:none">⬇️ Update App</button>
+<div id="permInstalled" style="display:none;text-align:center;padding:6px;background:rgba(6,255,165,.18);border-radius:8px;font-size:11px">✅ Installed • Offline Ready</div>
+</div>
+<small style="opacity:.5;font-size:9px;margin-top:6px;display:block">Version v1.4.0 • Size ~48KB • Offline</small>
+</div>
+<h3>📁 Projects</h3><div id="histList" style="margin-top:10px"></div><button class="glass-btn" style="width:100%;margin-top:10px" onclick="toggleHistory()">Close</button>
+</div>
+
+<div class="modal" id="langModal"><div class="modal-box"><h3>Select Language</h3><div id="langOpts" style="margin-top:10px"></div><button class="glass-btn" style="width:100%;margin-top:10px" onclick="closeLang()">Close</button></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/htmlmixed/htmlmixed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/css/css.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/clike/clike.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/shell/shell.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/php/php.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.js"></script>
+<script>
+let deferredPrompt=null,swReg=null;
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(r=>{
+    swReg=r;
+    r.addEventListener('updatefound',()=>{document.getElementById('permUpdateBtn').style.display='block';document.getElementById('appStatus').textContent='Update available!';});
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;checkAppStatus();});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;checkAppStatus();});
+async function installPWA(){
+  if(deferredPrompt){deferredPrompt.prompt();let ch=await deferredPrompt.userChoice;if(ch.outcome==='accepted'){deferredPrompt=null;checkAppStatus();}return;}
+  alert('Browser menu ⋮ > Add to Home Screen / Install App');
+}
+function updatePWA(){if(swReg&&swReg.waiting)swReg.waiting.postMessage({type:'SKIP_WAITING'});location.reload();}
+function checkAppStatus(){
+  let isStandalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  let s=document.getElementById('appStatus'),ib=document.getElementById('permInstallBtn'),ub=document.getElementById('permUpdateBtn'),ok=document.getElementById('permInstalled');
+  if(!s)return;
+  if(isStandalone){s.textContent='Installed • Offline ready';ib.style.display='none';ok.style.display='block';if(swReg&&swReg.waiting)ub.style.display='block';}
+  else{s.textContent='Not installed • Tap to install';ib.style.display='block';ok.style.display='none';}
+}
+const BOILERS={html:`<div class="hero">\n <h1>Seeti 💨</h1>\n <p>Fast • Glass • Code</p>\n</div>`,css:`body{display:grid;place-items:center;height:100vh;background:#0f0f14;color:#fff}`,js:`console.log("Seeti")`,python:`print("Hello Python")`,c:`#include <stdio.h>\nint main(){printf("Hi");return 0;}`,cpp:`#include <bits/stdc++.h>\nusing namespace std;\nint main(){cout<<"Hi";}`,bash:`#!/bin/bash\necho "Hi"`,php:`<?php echo "Hi";?>`};
+const langConfig={html:{mode:'htmlmixed',badge:'HTML',run:'▶ Run HTML',type:'web'},css:{mode:'css',badge:'CSS',run:'▶ Run CSS',type:'web'},js:{mode:'javascript',badge:'JS',run:'▶ Run JS',type:'web'},python:{mode:'python',badge:'Python',run:'▶ Run Python',type:'code'},c:{mode:'text/x-csrc',badge:'C',run:'▶ Run C',type:'code'},cpp:{mode:'text/x-c++src',badge:'C++',run:'▶ Run C++',type:'code'},bash:{mode:'shell',badge:'Bash',run:'▶ Run Bash',type:'code'},php:{mode:'text/x-php',badge:'PHP',run:'▶ Run PHP',type:'code'}};
+let DB=JSON.parse(localStorage.getItem('seeti_final')||`{"projects":{"Welcome":{"parts":${JSON.stringify(BOILERS)},"time":${Date.now()}}},"current":"Welcome"}`);
+function saveDB(){localStorage.setItem('seeti_final',JSON.stringify(DB));renderAll();}
+let active='html';
+let cm=CodeMirror(document.getElementById('editor'),{value:DB.projects[DB.current].parts[active],mode:langConfig[active].mode,theme:'material-darker',lineNumbers:true,lineWrapping:false,autoCloseBrackets:true});
+cm.on('change',()=>{DB.projects[DB.current].parts[active]=cm.getValue();DB.projects[DB.current].time=Date.now();saveDB();if(langConfig[active].type==='web')autoRun();});
+function ins(t,m){let c=cm.getCursor();cm.replaceRange(t,c);if(m)cm.setCursor({line:c.line,ch:c.ch+1});cm.focus();}
+function toggleSymbolBar(){let b=document.getElementById('symbolBar');b.style.display=b.style.display==='none'?'flex':'none';}
+let sizeMode='normal';function toggleSize(){let L=document.getElementById('left'),R=document.getElementById('right');if(sizeMode==='normal'){sizeMode='code';L.className='panel full';R.className='panel full-hide';}else if(sizeMode==='code'){sizeMode='preview';L.className='panel full-hide';R.className='panel full';}else{sizeMode='normal';L.className='panel';R.className='panel';}setTimeout(()=>cm.refresh(),100);}
+function toggleConsole(){document.getElementById('console').classList.toggle('show');}
+function autoRun(){let p=DB.projects[DB.current].parts;document.getElementById('preview').srcdoc=`${p.html||''}<style>${p.css||''}</style><script>${p.js||''}<\/script>`;}
+async function runPreview(){let cfg=langConfig[active];document.getElementById('runBtn').textContent=cfg.run;document.getElementById('curLangTop').textContent=cfg.badge;document.getElementById('langBadge').textContent=cfg.badge;if(cfg.type==='web'){autoRun();return;}let con=document.getElementById('console');con.classList.add('show');con.textContent=`▶ ${cfg.badge}\n`;try{let r=await puter.ai.chat(`Run ${cfg.badge}:\n${cm.getValue().slice(0,2000)}`);con.textContent+=r.message?.content||r;}catch(e){con.textContent+=e.message;}}
+function openLangModal(){let g=k=>`<div class="opt" onclick="switchLang('${k}')"><span>${langConfig[k].badge}</span><span>${k}</span></div>`;document.getElementById('langOpts').innerHTML=g('html')+g('css')+g('js')+g('python')+g('c')+g('cpp')+g('bash')+g('php');document.getElementById('langModal').style.display='flex';}
+function closeLang(){document.getElementById('langModal').style.display='none';}
+function switchLang(k){DB.projects[DB.current].parts[active]=cm.getValue();active=k;closeLang();cm.setOption('mode',langConfig[k].mode);cm.setValue(DB.projects[DB.current].parts[k]||BOILERS[k]||'');document.getElementById('runBtn').textContent=langConfig[k].run;document.getElementById('curLangTop').textContent=langConfig[k].badge;buildTabs();cm.refresh();runPreview();saveDB();}
+function buildTabs(){document.getElementById('tabs').innerHTML=Object.keys(langConfig).map(k=>`<div class="tab ${k===active?'active':''}" onclick="switchLang('${k}')">${langConfig[k].badge}</div>`).join('');}
+function newProject(){let n=prompt("Name?","Seeti "+(Object.keys(DB.projects).length+1));if(!n)return;DB.projects[n]={parts:{...BOILERS},time:Date.now()};DB.current=n;switchLang('html');saveDB();}
+function loadProject(){DB.current=document.getElementById('project').value;switchLang('html');}
+function renderAll(){let s=document.getElementById('project');s.innerHTML=Object.keys(DB.projects).map(k=>`<option ${k===DB.current?'selected':''}>${k}</option>`).join('');let arr=Object.entries(DB.projects).sort((a,b)=>b[1].time-a[1].time);document.getElementById('histList').innerHTML=arr.map(([k,v])=>`<div class="hist-item" onclick="openHist('${k}')"><b>${k}</b><br><small>${new Date(v.time).toLocaleString()}</small></div>`).join('');}
+function openHist(k){DB.current=k;toggleHistory();loadProject();}
+function toggleHistory(){document.getElementById('history').classList.toggle('open');if(document.getElementById('history').classList.contains('open'))checkAppStatus();}
+function closeLang(){document.getElementById('langModal').style.display='none';}
+buildTabs();renderAll();switchLang('html');setTimeout(checkAppStatus,800);
+</script>
+</body>
+  </html>
