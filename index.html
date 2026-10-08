@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Seeti Code Studio</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#7c3aed">
+<script src="https://js.puter.com/v2/"></script>
+<script type="importmap">
+{"imports":{"codemirror":"https://esm.sh/codemirror@6.0.1","@codemirror/view":"https://esm.sh/@codemirror/view@6.26.3","@codemirror/state":"https://esm.sh/@codemirror/state@6.4.1","@codemirror/lang-html":"https://esm.sh/@codemirror/lang-html@6.4.9","@codemirror/lang-css":"https://esm.sh/@codemirror/lang-css@6.2.1","@codemirror/lang-javascript":"https://esm.sh/@codemirror/lang-javascript@6.2.2","@codemirror/theme-one-dark":"https://esm.sh/@codemirror/theme-one-dark@6.1.3","@codemirror/autocomplete":"https://esm.sh/@codemirror/autocomplete@6.11.1"}}
+</script>
+<style>
+:root{--bg:#0e0e12;--panel:rgba(26,26,34,0.72);--border:rgba(255,255,255,0.07);--accent:#7c3aed;--text:#e8e8ea;--muted:#8b8b93;--panel2:#1a1a22}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui;height:100vh;overflow:hidden}
+.glass{background:var(--panel);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border)}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px}
+.lang-btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer}
+.kit-main{background:linear-gradient(135deg,var(--accent),#a855f7);border:none;color:white;padding:8px 16px;border-radius:999px;font-weight:700;box-shadow:0 0 18px rgba(124,58,237,.4);cursor:pointer}
+#home{padding:22px;overflow:auto;height:100vh}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:18px}
+.card{border-radius:16px;padding:14px;cursor:pointer}
+#editorView{display:none;flex-direction:column;height:100vh}
+.panes{display:flex;flex:1;overflow:hidden;gap:1px;background:var(--border)}
+.pane{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.pane-h{padding:8px 10px;font-size:11px;color:var(--muted);background:rgba(0,0,0,.3);display:flex;justify-content:space-between;align-items:center}
+.cm-editor{flex:1;background:var(--bg)!important}.cm-content{caret-color:var(--accent);line-height:1.75!important}.cm-cursor{border-left:2.2px solid var(--accent)!important}
+#preview{width:42%;border:none;background:white}
+.btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:9px;cursor:pointer}.btn.primary{background:var(--accent);border-color:var(--accent);color:white}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:99}.modal-box{width:min(420px,90vw);background:#1e1e28;border:1px solid var(--border);border-radius:18px;padding:18px}
+.opt{padding:10px 12px;border-radius:10px;cursor:pointer}.opt:hover{background:var(--panel2)}
+@media(max-width:768px){.panes{flex-direction:column;overflow-y:auto}.pane{height:38vh;min-height:220px}#preview{width:100%;height:48vh;position:sticky;bottom:0}.topbar{height:auto;flex-wrap:wrap;padding:10px}}
+</style>
+</head>
+<body>
+<div id="home">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div><h1 style="margin:0">Seeti <span style="color:#7c3aed">Code Studio</span></h1><p style="color:var(--muted);margin:4px 0 0">Projects • Single Preview • PWA • Kit AI</p></div>
+    <button class="btn primary" id="newBtn">Get Started Now →</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<div id="editorView">
+  <div class="topbar glass">
+    <div style="display:flex;gap:8px;align-items:center"><button class="btn" id="backBtn">← Projects</button><span id="pname" contenteditable="true"></span></div>
+    <div style="display:flex;gap:6px"><button class="lang-btn" data-pane="html">HTML ▼</button><button class="lang-btn" data-pane="css">CSS ▼</button><button class="lang-btn" data-pane="js">JS ▼</button><button class="lang-btn" id="addLangBtn">+ Language</button></div>
+    <div style="display:flex;gap:8px"><button class="btn" id="exportBtn">Export</button><button class="kit-main" id="kitMain">〰️ Kit AI</button></div>
+  </div>
+  <div class="panes">
+    <div class="pane"><div class="pane-h"><span>HTML •! + Tab</span><button class="btn" onclick="kitFor('html')">✦ Ask Kit</button></div><div id="ed-html" style="flex:1"></div></div>
+    <div class="pane"><div class="pane-h"><span>CSS</span><button class="btn" onclick="kitFor('css')">✦ Ask Kit</button></div><div id="ed-css" style="flex:1"></div></div>
+    <div class="pane"><div class="pane-h"><span>JS</span><button class="btn" onclick="kitFor('js')">✦ Ask Kit</button></div><div id="ed-js" style="flex:1"></div></div>
+    <iframe id="preview" title="Live Preview - Single"></iframe>
+  </div>
+</div>
+<div class="modal" id="langModal"><div class="modal-box"><h3 style="margin:0 0 12px">Choose Language</h3><div id="langOpts"></div><button class="btn" style="margin-top:12px;width:100%" onclick="document.getElementById('langModal').style.display='none'">Close</button></div></div>
+<script type="module">
+import {EditorView} from "@codemirror/view";import {EditorState} from "@codemirror/state";import {html} from "@codemirror/lang-html";import {css} from "@codemirror/lang-css";import {javascript} from "@codemirror/lang-javascript";import {oneDark} from "@codemirror/theme-one-dark";import {autocompletion} from "@codemirror/autocomplete";
+const boilerplate=`<!DOCTYPE html>\n<html lang="en">\n<head>\n <meta charset="UTF-8">\n <meta name="viewport" content="width=device-width, initial-scale=1.0">\n <title>Seeti Code Studio</title>\n</head>\n<body>\n <h1>Hello Seeti Code Studio 🚀</h1>\n <p>Single preview • No tabs • PWA ready</p>\n</body>\n</html>`;
+let db,currentId=null,editors={},activeLang='html';
+const langMap={html:['html','pug','markdown'],css:['css','scss','tailwind'],js:['javascript','typescript','python'],extra:['json','go','rust','react']};
+const openDB=()=>new Promise(r=>{const req=indexedDB.open("seeti_projects",1);req.onupgradeneeded=e=>e.target.result.createObjectStore("projects",{keyPath:"id"});req.onsuccess=e=>{db=e.target.result;r()}});
+function makeEditor(parent,ext,content){return new EditorView({state:EditorState.create({doc:content,extensions:[oneDark,ext,autocompletion(),EditorView.lineWrapping,EditorView.updateListener.of(v=>{if(v.docChanged){setTimeout(()=>save(),700);updatePreview()}}),EditorView.domEventHandlers({keydown(e,view){if(e.key==='Tab'){const pos=view.state.selection.main.head;const line=view.state.doc.lineAt(pos);const before=line.text.slice(0,pos-line.from).trim();if(before==='!'||before==='emmet'){e.preventDefault();view.dispatch({changes:{from:line.from,to:pos,insert:boilerplate}});return true}}}})]}),parent})}
+function updatePreview(){if(!editors.html)return;const h=editors.html.state.doc.toString(),c=editors.css.state.doc.toString(),j=editors.js.state.doc.toString();document.getElementById('preview').srcdoc=h.replace('</head>',`<style>${c}</style></head>`).replace('</body>',`<script>${j}<\\/script></body>`);}
+function save(){if(!currentId)return;db.transaction("projects","readwrite").objectStore("projects").put({id:currentId,name:document.getElementById('pname').innerText||'Untitled',html:editors.html.state.doc.toString(),css:editors.css.state.doc.toString(),js:editors.js.state.doc.toString(),updated:Date.now()});renderHome()}
+await openDB();
+function renderHome(){const req=db.transaction("projects").objectStore("projects").getAll();req.onsuccess=()=>{const g=document.getElementById('grid');g.innerHTML='';req.result.sort((a,b)=>b.updated-a.updated).forEach(p=>{const d=document.createElement('div');d.className='card glass';d.innerHTML=`<b>${p.name}</b><div style="font-size:12px;color:#8b8b93">${new Date(p.updated).toLocaleString()}</div>`;d.onclick=()=>openProject(p.id);g.appendChild(d)})}}
+async function openProject(id){const req=db.transaction("projects").objectStore("projects").get(id);req.onsuccess=()=>{const p=req.result;currentId=id;document.getElementById('home').style.display='none';document.getElementById('editorView').style.display='flex';document.getElementById('pname').innerText=p.name;document.getElementById('ed-html').innerHTML='';document.getElementById('ed-css').innerHTML='';document.getElementById('ed-js').innerHTML='';editors.html=makeEditor(document.getElementById('ed-html'),html(),p.html);editors.css=makeEditor(document.getElementById('ed-css'),css(),p.css);editors.js=makeEditor(document.getElementById('ed-js'),javascript(),p.js);updatePreview()}}
+document.getElementById('newBtn').onclick=()=>{const id=Date.now().toString();db.transaction("projects","readwrite").objectStore("projects").put({id,name:"Project "+new Date().toLocaleDateString(),html:boilerplate,css:"body{font-family:system-ui}",js:'console.log("Seeti Code Studio")',updated:Date.now()}).onsuccess=()=>openProject(id)};
+document.getElementById('backBtn').onclick=()=>{document.getElementById('home').style.display='block';document.getElementById('editorView').style.display='none';renderHome()};
+document.getElementById('exportBtn').onclick=()=>{const b=new Blob([document.getElementById('preview').srcdoc],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='seeti-code-studio.html';a.click()};
+document.querySelectorAll('.lang-btn[data-pane]').forEach(btn=>{btn.onclick=()=>{activeLang=btn.dataset.pane;document.getElementById('langOpts').innerHTML=langMap[activeLang].map(o=>`<div class="opt" onclick="switchLang('${o}')">${o}</div>`).join('');document.getElementById('langModal').style.display='flex'}});
+window.switchLang=(l)=>{document.querySelector(`[data-pane="${activeLang}"]`).innerText=l+' ▼';document.getElementById('langModal').style.display='none'};
+document.getElementById('addLangBtn').onclick=()=>{activeLang='extra';document.getElementById('langOpts').innerHTML=[...langMap.extra,...langMap.html,...langMap.js].map(o=>`<div class="opt" onclick="switchLang('${o}')">${o}</div>`).join('');document.getElementById('langModal').style.display='flex'};
+window.kitFor=async(pane)=>{const code=editors[pane].state.doc.toString().slice(0,3000);const pr=prompt(`Kit AI - ${pane} me kya karna hai?`);if(!pr)return;try{const ans=await puter.ai.chat(pr+":\n"+code);const txt=ans.message?.content||ans.toString();if(confirm(txt.slice(0,200)+"\n\nApply karu?"))editors[pane].dispatch({changes:{from:0,to:editors[pane].state.doc.length,insert:txt}})}catch(e){alert('Kit AI error: '+e.message)}};
+document.getElementById('kitMain').onclick=()=>kitFor('html');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderHome();
+</script>
+</body>
+</html>
