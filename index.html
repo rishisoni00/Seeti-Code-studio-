@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width,
+    initial-scale=1,
+    maximum-scale=1,
+    user-scalable=no"
+  >
+  <title>
+    Seeti Code Studio - World Best
+  </title>
+
+  <link
+    rel="icon"
+    href="logo.jpg"
+  >
+  <link
+    rel="manifest"
+    href="manifest.json"
+  >
+
+  <!-- CodeMirror CSS -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css"
+  >
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css"
+  >
+
+  <!-- CodeMirror JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closetag.min.js"></script>
+
+  <!-- Beautify -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.11/js/lib/beautify.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.11/js/lib/beautify-css.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.11/js/lib/beautify-html.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --panel: #12121a;
+      --side: #0f0f14;
+      --border: #1e1e2a;
+      --accent: #8b5cf6;
+      --accent2: #10b981;
+      --muted: #8b8ba3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #fff;
+      font-family: system-ui;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #top {
+      height: 54px;
+      background: var(--side);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      flex-shrink: 0;
+    }
+
+   .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+    }
+
+   .brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #1a1a25;
+    }
+
+   .pill {
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: #1a1a25;
+      color: #fff;
+      font-size: 10px;
+    }
+
+   .pill-accent {
+      background: linear-gradient(
+        135deg,
+        var(--accent),
+        var(--accent2)
+      );
+      border: 0;
+      font-weight: 700;
+    }
+
+    #work {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    #sidebar {
+      width: 280px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--panel);
+      min-width: 0;
+    }
+
+    #tabs {
+      height: 46px;
+      background: var(--side);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      overflow: auto;
+      flex-shrink: 0;
+    }
+
+   .tab {
+      height: 46px;
+      min-width: 110px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      border-right: 1px solid var(--border);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+   .tab.active {
+      background: var(--panel);
+      color: #fff;
+      border-top: 3px solid var(--accent);
+    }
+
+    #editors {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+      min-height: 200px;
+    }
+
+   .eb {
+      position: absolute;
+      inset: 0;
+      display: none;
+    }
+
+   .eb.active {
+      display: block;
+    }
+
+   .CodeMirror {
+      height: 100%!important;
+      font-size: 14px!important;
+      line-height: 1.6!important;
+    }
+
+   .CodeMirror pre {
+      white-space: pre-wrap!important;
+      word-break: break-word!important;
+      overflow-wrap: anywhere!important;
+    }
+
+    #tools {
+      height: 42px;
+      background: var(--side);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    #tools button {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #1e1e2a;
+      color: #fff;
+      font-size: 11px;
+    }
+
+    #sym {
+      height: 54px;
+      background: var(--side);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      padding: 7px 8px;
+      overflow: auto;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #sym button {
+      min-width: 44px;
+      height: 44px;
+      background: #1e1e2a;
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 11px;
+    }
+
+    #sym button.run {
+      background: linear-gradient(
+        135deg,
+        var(--accent),
+        var(--accent2)
+      );
+      border: 0;
+      min-width: 64px;
+      font-weight: 800;
+    }
+
+   .handle {
+      height: 16px;
+      background: #15151f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+   .handle::after {
+      content: '';
+      width: 52px;
+      height: 5px;
+      background: #3a3a4a;
+      border-radius: 10px;
+    }
+
+    #previewBox {
+      height: 38%;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 110px;
+      flex-shrink: 0;
+    }
+
+    #previewHead {
+      height: 32px;
+      background: var(--side);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 11px;
+    }
+
+    #preview {
+      flex: 1;
+      border: 0;
+      width: 100%;
+      background: #fff;
+    }
+
+    #bottom {
+      height: 26px;
+      background: linear-gradient(
+        90deg,
+        var(--accent),
+        var(--accent2)
+      );
+      display: flex;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    @media(max-width:768px) {
+      #sidebar {
+        position: fixed;
+        left: -280px;
+        top: 54px;
+        bottom: 0;
+        z-index: 30;
+        transition:.3s;
+      }
+      #sidebar.open {
+        left: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="top">
+    <div
+      class="brand"
+      onclick="document.getElementById('sidebar').classList.toggle('open')"
+    >
+      <img
+        src="logo.jpg"
+        onerror="this.src='https://via.placeholder.com/32/8b5cf6/fff?text=S'"
+      >
+      Seeti Code
+    </div>
+
+    <div style="display:flex;gap:5px">
+      <select
+        id="langSel"
+        class="pill"
+        onchange="switchLang(this.value)"
+      >
+        <option value="web">WEB</option>
+        <option value="java">JAVA</option>
+        <option value="python">PYTHON</option>
+      </select>
+
+      <button
+        class="pill"
+        onclick="format()"
+      >
+        FORMAT
+      </button>
+
+      <button
+        class="pill pill-accent"
+        onclick="run()"
+      >
+        RUN
+      </button>
+    </div>
+  </div>
+
+  <div id="work">
+    <div id="sidebar">
+      <div style="
+        height:38px;
+        padding:0 12px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        font-size:11px;
+        color:#8b8ba3;
+        background:#0f0f14;
+        border-bottom:1px solid #1e1e2a
+      ">
+        <span>Explorer</span>
+        <button
+          class="pill"
+          style="height:26px"
+          onclick="newFile()"
+        >
+          + New
+        </button>
+      </div>
+      <div
+        id="tree"
+        style="flex:1;overflow:auto;padding:8px"
+      ></div>
+    </div>
+
+    <div id="center">
+      <div id="tabs">
+        <div
+          class="tab active"
+          data-t="html"
+          onclick="switchTab('html')"
+        >
+          index.html
+        </div>
+        <div
+          class="tab"
+          data-t="css"
+          onclick="switchTab('css')"
+        >
+          style.css
+        </div>
+        <div
+          class="tab"
+          data-t="js"
+          onclick="switchTab('js')"
+        >
+          script.js
+        </div>
+      </div>
+
+      <div id="editors">
+        <div class="eb active" id="eb-html">
+          <textarea id="t-html"></textarea>
+        </div>
+        <div class="eb" id="eb-css">
+          <textarea id="t-css"></textarea>
+        </div>
+        <div class="eb" id="eb-js">
+          <textarea id="t-js"></textarea>
+        </div>
+        <div class="eb" id="eb-other">
+          <textarea id="t-other"></textarea>
+          <div style="padding:8px;background:#08080c">
+            <div
+              id="runOut"
+              style="
+                white-space:pre-wrap;
+                font-size:12px;
+                color:#4ade80;
+                font-family:monospace;
+                min-height:40px
+              "
+            >
+              Output
+            </div>
+            <input
+              id="stdin"
+              placeholder="stdin"
+              style="
+                width:100%;
+                margin-top:6px;
+                padding:8px;
+                background:#12121a;
+                border:1px solid #1e1e2a;
+                color:#4ade80;
+                border-radius:6px
+              "
+            >
+          </div>
+        </div>
+      </div>
+
+      <div id="tools">
+        <button onclick="toggleWrap()">Wrap</button>
+        <button onclick="format()">Format</button>
+        <span
+          id="modeLabel"
+          style="margin-left:8px;font-size:11px;color:#8b8ba3"
+        >
+          WEB Editor
+        </span>
+        <span
+          id="saveStat"
+          style="margin-left:auto;font-size:11px;color:#10b981"
+        >
+          Ready
+        </span>
+      </div>
+
+      <div id="sym">
+        <button onclick="ins('<')"><</button>
+        <button onclick="ins('>')">></button>
+        <button onclick="ins('{')">{</button>
+        <button onclick="ins('}')">}</button>
+        <button onclick="ins('(')">(</button>
+        <button onclick="ins(')')">)</button>
+        <button onclick="ins(';')">;</button>
+        <button onclick="ins('=')">=</button>
+        <button class="run" onclick="run()">RUN</button>
+      </div>
+
+      <div class="handle" id="h1"></div>
+
+      <div id="previewBox">
+        <div id="previewHead">
+          <span>PREVIEW</span>
+          <span id="log" style="color:#10b981"></span>
+        </div>
+        <iframe
+          id="preview"
+          sandbox="allow-scripts allow-same-origin"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div id="bottom">
+    <span>Seeti Code - World Best - Editor + IDE</span>
+    <span>Live</span>
+  </div>
+
+<script>
+let active = 'html';
+let curLang = 'web';
+let cmH, cmC, cmJ, cmO;
+
+let html = `
+<div class="app">
+  <h1>
+    Seeti Code
+  </h1>
+  <p>
+    Vertical Fixed
+  </p>
+  <button onclick="go()">
+    Click Me
+  </button>
+</div>
+`;
+
+let css = `
+body {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0a0a0f;
+  color: #fff;
+  font-family: system-ui;
+}
+
+.app {
+  text-align: center;
+}
+
+h1 {
+  color: #8b5cf6;
+  font-size: 32px;
+}
+
+button {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #10b981
+  );
+  color: #fff;
+  font-weight: 700;
+}
+`;
+
+let js = `
+function go() {
+  alert(
+    "Keyboard Working!"
+  );
+}
+`;
+
+let other = `
+// Java
+public class Main {
+  public static void main(
+    String[] a
+  ) {
+    System.out.println(
+      "Seeti IDE Working"
+    );
+  }
+}
+`;
+
+function init() {
+  document.getElementById(
+    't-html'
+  ).value = html;
+
+  document.getElementById(
+    't-css'
+  ).value = css;
+
+  document.getElementById(
+    't-js'
+  ).value = js;
+
+  document.getElementById(
+    't-other'
+  ).value = other;
+
+  try {
+    let s = JSON.parse(
+      localStorage.getItem(
+        'seeti_fix'
+      ) || 'null'
+    );
+    if (s) {
+      document.getElementById(
+        't-html'
+      ).value = s.h;
+      document.getElementById(
+        't-css'
+      ).value = s.c;
+      document.getElementById(
+        't-js'
+      ).value = s.j;
+    }
+  } catch {}
+
+  cmH = CodeMirror.fromTextArea(
+    document.getElementById('t-html'),
+    {
+      mode: 'htmlmixed',
+      theme: 'material-darker',
+      lineNumbers: true,
+      lineWrapping: true,
+      autoCloseBrackets: true,
+      autoCloseTags: true
+    }
+  );
+
+  cmC = CodeMirror.fromTextArea(
+    document.getElementById('t-css'),
+    {
+      mode: 'css',
+      theme: 'material-darker',
+      lineNumbers: true,
+      lineWrapping: true
+    }
+  );
+
+  cmJ = CodeMirror.fromTextArea(
+    document.getElementById('t-js'),
+    {
+      mode: 'javascript',
+      theme: 'material-darker',
+      lineNumbers: true,
+      lineWrapping: true
+    }
+  );
+
+  cmO = CodeMirror.fromTextArea(
+    document.getElementById('t-other'),
+    {
+      mode: 'text/x-java',
+      theme: 'material-darker',
+      lineNumbers: true,
+      lineWrapping: true
+    }
+  );
+
+  cmH.on('change', run);
+  cmC.on('change', run);
+  cmJ.on('change', run);
+
+  setTimeout(() => {
+    cmH.refresh();
+    cmC.refresh();
+    cmJ.refresh();
+    cmO.refresh();
+    run();
+    renderTree();
+  }, 300);
+}
+
+function get(t) {
+  if (t === 'html') {
+    return cmH.getValue();
+  }
+  if (t === 'css') {
+    return cmC.getValue();
+  }
+  if (t === 'js') {
+    return cmJ.getValue();
+  }
+  return cmO.getValue();
+}
+
+function switchTab(t) {
+  active = t;
+
+  document
+   .querySelectorAll('.tab')
+   .forEach(e => {
+      e.classList.remove('active');
+    });
+
+  document
+   .querySelectorAll('.eb')
+   .forEach(e => {
+      e.classList.remove('active');
+    });
+
+  document
+   .getElementById('eb-' + t)
+   .classList
+   .add('active');
+
+  document
+   .querySelector(`[data-t="${t}"]`)
+   .classList
+   .add('active');
+
+  setTimeout(() => {
+    cmH.refresh();
+    cmC.refresh();
+    cmJ.refresh();
+  }, 50);
+}
+
+function switchLang(v) {
+  curLang = v;
+
+  if (v === 'web') {
+    document.getElementById(
+      'previewBox'
+    ).style.display = 'flex';
+
+    switchTab('html');
+
+    document.getElementById(
+      'modeLabel'
+    ).textContent = 'WEB Editor';
+
+  } else {
+    document
+     .querySelectorAll('.eb')
+     .forEach(e => {
+        e.classList.remove('active');
+      });
+
+    document
+     .getElementById('eb-other')
+     .classList
+     .add('active');
+
+    document.getElementById(
+      'previewBox'
+    ).style.display = 'none';
+
+    let m = {
+      java: 'text/x-java',
+      python: 'python'
+    };
+
+    cmO.setOption(
+      'mode',
+      m[v] || 'javascript'
+    );
+
+    cmO.refresh();
+
+    document.getElementById(
+      'modeLabel'
+    ).textContent = 'IDE ' + v.toUpperCase();
+  }
+}
+
+function ins(t) {
+  let cm =
+    active === 'html'? cmH :
+    active === 'css'? cmC :
+    active === 'js'? cmJ : cmO;
+
+  cm.replaceSelection(t);
+  cm.focus();
+  run();
+}
+
+function run() {
+  if (curLang!== 'web') {
+    runReal();
+    return;
+  }
+
+  let h = get('html');
+  let c = get('css');
+  let j = get('js');
+
+  localStorage.setItem(
+    'seeti_fix',
+    JSON.stringify({h,c,j})
+  );
+
+  document.getElementById(
+    'preview'
+  ).srcdoc = `
+    <style>${c}</style>
+    ${h}
+    <script>${j}<\/script>
+  `;
+
+  document.getElementById(
+    'saveStat'
+  ).textContent = 'Saved';
+}
+
+async function runReal() {
+  let code = get('other');
+
+  document.getElementById(
+    'runOut'
+  ).textContent = 'Running ' + curLang + '...';
+
+  let map = {
+    java: {
+      l: 'java',
+      v: '15.0.2'
+    },
+    python: {
+      l: 'python',
+      v: '3.10.0'
+    }
+  };
+
+  let mm = map[curLang];
+
+  if (!mm) {
+    document.getElementById(
+      'runOut'
+    ).textContent = code;
+    return;
+  }
+
+  try {
+    let r = await fetch(
+      'https://emkc.org/api/v2/piston/execute',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          language: mm.l,
+          version: mm.v,
+          files: [{content: code}],
+          stdin: document.getElementById(
+            'stdin'
+          ).value
+        })
+      }
+    );
+
+    let d = await r.json();
+
+    document.getElementById(
+      'runOut'
+    ).textContent =
+      (d.run?.output || '') +
+      (d.run?.stderr || '');
+
+  } catch (e) {
+    document.getElementById(
+      'runOut'
+    ).textContent = e.message;
+  }
+}
+
+function format() {
+  try {
+    if (active === 'html') {
+      cmH.setValue(
+        html_beautify(
+          cmH.getValue(),
+          {
+            indent_size: 2,
+            wrap_line_length: 40
+          }
+        )
+      );
+    }
+    if (active === 'css') {
+      cmC.setValue(
+        css_beautify(
+          cmC.getValue(),
+          {indent_size: 2}
+        )
+      );
+    }
+    if (active === 'js') {
+      cmJ.setValue(
+        js_beautify(
+          cmJ.getValue(),
+          {indent_size: 2}
+        )
+      );
+    }
+  } catch {}
+
+  run();
+}
+
+function toggleWrap() {
+  let w = cmH.getOption(
+    'lineWrapping'
+  );
+
+  [cmH,cmC,cmJ,cmO]
+   .forEach(cm => {
+      cm.setOption(
+        'lineWrapping',
+       !w
+      );
+    });
+}
+
+function renderTree() {
+  document.getElementById(
+    'tree'
+  ).innerHTML = `
+    <div style="padding:8px;font-weight:700">
+      Files
+    </div>
+    <div
+      onclick="switchTab('html')"
+      style="padding:8px 12px;
+      font-size:12px;
+      cursor:pointer;
+      color:${active==='html'?'#fff':'#8b8ba3'}"
+    >
+      📄 index.html
+    </div>
+    <div
+      onclick="switchTab('css')"
+      style="padding:8px 12px;
+      font-size:12px;
+      color:${active==='css'?'#fff':'#8b8ba3'}"
+    >
+      🎨 style.css
+    </div>
+    <div
+      onclick="switchTab('js')"
+      style="padding:8px 12px;
+      font-size:12px;
+      color:${active==='js'?'#fff':'#8b8ba3'}"
+    >
+      ⚡ script.js
+    </div>
+  `;
+}
+
+function newFile() {
+  let n = prompt('File name?');
+  if (n) alert(n);
+}
+
+let h = document.getElementById('h1');
+let ed = document.getElementById('editors');
+let sy = 0;
+let th = 0;
+
+h.addEventListener(
+  'mousedown',
+  e => {
+    sy = e.clientY;
+    th = ed.offsetHeight;
+
+    let mv = ev => {
+      let nh = th + ev.clientY - sy;
+      if (
+        nh > 120 &&
+        nh < innerHeight * 0.8
+      ) {
+        ed.style.flex =
+          '0 0 ' + nh + 'px';
+        cmH.refresh();
+        cmC.refresh();
+        cmJ.refresh();
+      }
+    };
+
+    let up = () => {
+      removeEventListener(
+        'mousemove',
+        mv
+      );
+      removeEventListener(
+        'mouseup',
+        up
+      );
+    };
+
+    addEventListener('mousemove', mv);
+    addEventListener('mouseup', up);
+  }
+);
+
+h.addEventListener(
+  'touchstart',
+  e => {
+    sy = e.touches[0].clientY;
+    th = ed.offsetHeight;
+  },
+  {passive:true}
+);
+
+h.addEventListener(
+  'touchmove',
+  e => {
+    e.preventDefault();
+    let nh = th + e.touches[0].clientY - sy;
+    if (
+      nh > 120 &&
+      nh < innerHeight * 0.8
+    ) {
+      ed.style.flex =
+        '0 0 ' + nh + 'px';
+      cmH.refresh();
+      cmC.refresh();
+      cmJ.refresh();
+    }
+  },
+  {passive:false}
+);
+
+init();
+</script>
+
+</body>
+    </html>
