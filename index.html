@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8b5cf6">
+<meta name="apple-mobile-web-app-title" content="Seeti">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="dev-logo-512.png">
+<link rel="apple-touch-icon" href="dev-logo-512.png">
+<title>Seeti Code Editor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closetag.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/comment/comment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/keymap/sublime.min.js"></script>
+<script src="https://unpkg.com/emmet-codemirror@2.2.0/dist/emmet.js"></script>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+:root{--accent:#8b5cf6;--bg:#0a0a0f;--card:#15151f;--border:rgba(255,255,255,.08);--muted:#8b8ba3}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui;overflow:hidden}
+.top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:rgba(15,15,20,.95);border-bottom:1px solid var(--border)}
+.brand{font-weight:800;display:flex;gap:10px;align-items:center;cursor:pointer;font-size:18px}.brand img{width:36px;height:36px;border-radius:11px;box-shadow:0 4px 16px rgba(139,92,246,.4);background:#000}
+.btn{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.btn-accent{background:linear-gradient(135deg,#8b5cf6,#10b981);border:0;font-weight:700}
+#updateBanner{display:none;position:fixed;top:56px;left:0;right:0;background:linear-gradient(90deg,#8b5cf6,#10b981);color:#fff;padding:8px 14px;z-index:300;justify-content:space-between;align-items:center;font-size:12px} #updateBanner.show{display:flex}
+#drawer{position:fixed;top:56px;left:-320px;width:300px;height:calc(100vh - 56px);background:#11111a;border-right:1px solid var(--border);z-index:100;transition:.3s;padding:14px;overflow:auto;display:flex;flex-direction:column} #drawer.open{left:0}
+.fileTabs{height:40px;display:flex;overflow:auto;background:#0e0e15;border-bottom:1px solid var(--border)}.fileTab{padding:0 14px;height:100%;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer}.fileTab.active{background:#1e1e2a;color:#fff;border-top:2px solid var(--accent)}
+.main{display:flex;height:calc(100vh - 56px - 40px - 38px - 160px)} #editor{flex:1} #previewWrap{flex:1;display:none;flex-direction:column;background:#fff} #previewWrap.show{display:flex}
+.CodeMirror{height:100%!important;font-size:14px}
+#symBar{display:flex;gap:6px;overflow:auto;padding:6px 10px;background:#0e0e15;border-bottom:1px solid var(--border)} #symBar button{min-width:32px;height:30px;background:#1e1e2a;border:1px solid var(--border);color:#fff;border-radius:8px}
+#bottom{height:160px;background:#08080c;border-top:1px solid var(--border);display:flex;flex-direction:column}
+#statusBar{height:24px;background:linear-gradient(90deg,#8b5cf6,#10b981);display:flex;justify-content:space-between;padding:0 10px;font-size:11px;align-items:center}
+#outTabs{display:flex;gap:14px;padding:6px 12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted)} #outTabs span.active{color:#fff;border-bottom:2px solid var(--accent)}
+#output{flex:1;padding:8px;font:12px monospace;overflow:auto;white-space:pre-wrap} #stdin{margin:6px;background:#11111a;color:#4ade80;border:1px solid var(--border);border-radius:8px;padding:6px}
+#aiPanel{position:fixed;right:12px;top:68px;bottom:12px;width:390px;max-width:calc(100vw - 24px);z-index:999;background:#15151f;border:1px solid var(--border);border-radius:18px;transform:translateX(120%);transition:.3s;display:flex;flex-direction:column;padding:14px} #aiPanel.open{transform:translateX(0)}
+.pwa-card{margin-top:auto;padding:12px;border:1px dashed var(--accent);border-radius:12px;background:rgba(139,92,246,.08)}
+</style>
+</head>
+<body>
+<div id="updateBanner"><span id="updText">🚀 Seeti Update!</span><div style="display:flex;gap:6px"><button class="btn" style="height:26px;background:#fff;color:#000" onclick="applyUpdate()">Update Now</button><button class="btn" style="height:26px" onclick="document.getElementById('updateBanner').classList.remove('show')">Later</button></div></div>
+<div class="top">
+<div class="brand" onclick="toggleDrawer()"><img src="dev-logo-512.png"> Seeti <span style="font-size:11px;opacity:.6;font-weight:400">Code Editor</span></div>
+<div style="display:flex;gap:6px;align-items:center">
+<select id="langSel" onchange="changeLang()" class="btn"><option value="html">HTML</option><option value="css">CSS</option><option value="javascript">JS</option><option value="typescript">TS</option><option value="java">Java</option><option value="python">PY</option><option value="c">C</option><option value="cpp">C++</option></select>
+<span id="saveStatus" style="font-size:10px;color:var(--muted)">Saved</span>
+<button class="btn btn-accent" onclick="openAI()">✨ Dev</button>
+<button class="btn" onclick="run()">▶ Run</button>
+</div>
+</div>
+<div class="fileTabs" id="fileTabs"></div>
+<div id="symBar"><button onclick="ins('{')">{</button><button onclick="ins('}')">}</button><button onclick="ins('(')">(</button><button onclick="ins(')')">)</button><button onclick="ins(';')">;</button><button onclick="ins('=')">=</button><button onclick="ins('\"')">"</button><button onclick="ins('<')"><</button><button onclick="ins('>')">></button></div>
+<div id="drawer">
+<button class="btn btn-accent" style="width:100%;height:42px;justify-content:center" onclick="newProject()">+ New Project</button>
+<button class="btn" style="width:100%;margin-top:8px;justify-content:center" onclick="newFile()">+ New File</button>
+<div id="projList" style="margin-top:12px"></div>
+<div class="pwa-card"><div style="display:flex;gap:8px;align-items:center"><img src="dev-logo-512.png" style="width:28px;height:28px;border-radius:8px"><div><b style="font-size:12px">Seeti Code Editor</b><div style="font-size:9px;color:var(--muted)">Powered by Dev AI</div></div></div><div style="font-size:10px;color:var(--muted);margin:8px 0">8 Languages • Real Compiler • Offline</div><button class="btn btn-accent" style="width:100%;justify-content:center" onclick="handlePWA()">📲 Install Seeti</button><button class="btn" style="width:100%;margin-top:6px;justify-content:center" onclick="exportAll()">⬇️ Backup Projects</button></div>
+<div id="storageInfo" style="margin-top:10px;font-size:9px;color:var(--muted)"></div>
+</div>
+<div class="main"><div id="editor"></div><div id="previewWrap"><div style="height:36px;display:flex;justify-content:space-between;padding:0 10px;background:#0f0f14;align-items:center;font-size:11px"><span id="previewTitle">PREVIEW</span><button class="btn" onclick="document.getElementById('previewWrap').classList.remove('show')">✕</button></div><iframe id="preview" sandbox="allow-scripts allow-modals allow-same-origin" style="flex:1;border:0"></iframe></div></div>
+<div id="bottom"><div id="outTabs"><span id="tabOut" class="active" onclick="switchTab('out')">OUTPUT</span><span id="tabProb" onclick="switchTab('prob')">PROBLEMS</span><span style="margin-left:auto;cursor:pointer" onclick="clearOut()">Clear</span></div><input id="stdin" placeholder="stdin for Java/Python/C..."><div id="output">Seeti Ready — Dev AI Linked</div><div id="problems" style="display:none;padding:8px;color:#f87171;font-size:11px"></div></div>
+<div id="statusBar"><span id="statusLeft">Ln 1</span><span id="statusRight">Seeti • Dev 🪈 Linked • v6.3</span></div>
+<div id="aiPanel"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>Dev</b> <span style="font-size:10px;opacity:.6">— Seeti AI Assistant</span></div><button class="btn" onclick="openAI()">✕</button></div><div id="aiContext" style="font-size:10px;color:var(--muted);margin-top:8px;padding:6px;background:rgba(0,0,0,.3);border-radius:8px">Seeti Project: - | File: -</div><textarea id="aiPrompt" placeholder="Dev se bolo: Add dark mode, Fix error, Explain..." style="width:100%;height:80px;margin:10px 0;padding:10px;border-radius:12px;background:#0a0a0f;color:#fff;border:1px solid var(--border)"></textarea><div style="display:flex;gap:6px"><button class="btn" onclick="askAI('make')">Generate</button><button class="btn" onclick="askAI('fix')">Fix with Dev</button><button class="btn" onclick="askAI('explain')">Explain</button></div><div id="aiResponse" style="flex:1;overflow:auto;margin-top:10px;padding:10px;background:#0a0a0f;border-radius:12px;font:11px monospace;white-space:pre-wrap"></div><button class="btn btn-accent" style="margin-top:10px;height:44px;justify-content:center;width:100%" onclick="applyAICode()">Apply by Dev</button></div>
+<script>
+const APP_VERSION='6.3-seeti-dev'; const DATA_KEY='seeti_v3'; const VER_KEY='seeti_ver';
+let cm=CodeMirror(document.getElementById('editor'),{mode:'htmlmixed',theme:'material-darker',lineNumbers:true,lineWrapping:true,autoCloseBrackets:true,autoCloseTags:true,keyMap:'sublime',value:''}); emmet(cm);
+let projects=JSON.parse(localStorage.getItem(DATA_KEY)||'[]'); let curProj=0,curFile=0,lastAI='',lastMode='',deferredPrompt=null; const $=id=>document.getElementById(id);
+function ins(t){ cm.replaceSelection(t); cm.focus(); }
+function toggleDrawer(){ $('drawer').classList.toggle('open'); }
+function switchTab(t){ document.getElementById('tabOut').classList.toggle('active',t==='out'); document.getElementById('tabProb').classList.toggle('active',t==='prob'); $('output').style.display=t==='out'?'block':'none'; $('problems').style.display=t==='prob'?'block':'none'; }
+function clearOut(){ $('output').textContent=''; }
+function getCtx(){ let p=projects[curProj]; if(!p) return {projName:"-",currentFile:{name:"-",lang:"-"}}; return {projName:p.name,currentFile:p.files[curFile]}; }
+function saveAll(){ localStorage.setItem(DATA_KEY, JSON.stringify(projects)); localStorage.setItem(VER_KEY, APP_VERSION); $('saveStatus').textContent='Saved'; let ctx=getCtx(); $('aiContext').textContent=`Seeti: ${ctx.projName} | File: ${ctx.currentFile.name} | Dev Ready v${APP_VERSION}`; $('storageInfo').innerHTML=`Seeti Ver: ${APP_VERSION}<br>Data: ${(JSON.stringify(projects).length/1024).toFixed(1)}KB SAFE`; renderAll(); if(puter.auth.isSignedIn()) puter.fs.write('Seeti/projects.json', JSON.stringify(projects)).catch(()=>{}); }
+function renderAll(){ let tabs=''; if(projects[curProj]) projects[curProj].files.forEach((f,i)=>{ tabs+=`<div class="fileTab ${i==curFile?'active':''}" onclick="curFile=${i};openFile()">${f.name}</div>`; }); $('fileTabs').innerHTML=tabs; let h=''; projects.forEach((p,i)=>{ h+=`<div style="padding:10px;border:1px solid var(--border);border-radius:12px;margin:8px 0;background:var(--card)"><b onclick="curProj=${i};curFile=0;openFile()">${p.name}</b>`; p.files.forEach((f,j)=>{ h+=`<div style="font-size:11px;padding:4px 6px;border-radius:6px;cursor:pointer;${i==curProj&&j==curFile?'background:rgba(139,92,246,.2)':''}" onclick="curProj=${i};curFile=${j};openFile()">${f.name}</div>`; }); h+=`</div>`; }); $('projList').innerHTML=h||'No projects'; }
+function newProject(){ let n=prompt('Project name?'); if(!n) return; let l=$('langSel').value; let fn=l==='html'?'index.html':l==='css'?'style.css':l==='java'?'Main.java':l==='python'?'main.py':l==='javascript'?'main.js':'main.'+l; let starter=l==='java'?'public class Main{\n public static void main(String[] args){\n System.out.println("Hello Seeti - Dev Java");\n }\n}':''; projects.push({name:n,files:[{name:fn,lang:l,content:starter}]}); curProj=projects.length-1; curFile=0; saveAll(); openFile(); }
+function newFile(){ let n=prompt('File name?','style.css'); if(!n) return; let ext=n.split('.').pop(); let map={html:'html',css:'css',js:'javascript',ts:'typescript',java:'java',py:'python',c:'c',cpp:'cpp'}; projects[curProj].files.push({name:n,lang:map[ext]||'html',content:''}); curFile=projects[curProj].files.length-1; saveAll(); openFile(); }
+function openFile(){ if(!projects.length) return; let f=projects[curProj].files[curFile]; $('langSel').value=f.lang; let map={html:'htmlmixed',css:'css',javascript:'javascript',typescript:'javascript',java:'text/x-java',python:'python',c:'text/x-csrc',cpp:'text/x-c++src'}; cm.setOption('mode', map[f.lang]||'htmlmixed'); if(cm.getValue()!==f.content) cm.setValue(f.content); }
+function changeLang(){ if(projects[curProj]){ projects[curProj].files[curFile].lang=$('langSel').value; saveAll(); } }
+cm.on('change', ()=>{ if(projects[curProj]){ projects[curProj].files[curFile].content=cm.getValue(); localStorage.setItem(DATA_KEY, JSON.stringify(projects)); } let lang=projects[curProj]?.files[curFile]?.lang; if(['html','javascript','css'].includes(lang)){ clearTimeout(window._live); window._live=setTimeout(run,600); } });
+async function run(){
+  let f=projects[curProj]?.files[curFile]; let lang=f?f.lang:$('langSel').value; let code=cm.getValue();
+  document.getElementById('previewWrap').classList.add('show');
+  if(lang==='html'){ $('preview').srcdoc=code; $('output').textContent='Seeti Live HTML ✓'; return; }
+  if(lang==='javascript'||lang==='typescript'){ $('preview').srcdoc=`<script>${code}<\/script>`; $('output').textContent='Seeti Live JS ✓'; return; }
+  if(lang==='css'){ $('preview').srcdoc=`<style>${code}</style><div style="padding:20px;font-family:system-ui"><h1>Seeti CSS Preview</h1></div>`; $('output').textContent='Seeti CSS Live ✓'; return; }
+  $('output').textContent='⏳ Real Compiler: '+lang+'... (No AI)';
+  let map={python:{l:'python',v:'3.10.0'},c:{l:'c',v:'10.2.0'},cpp:{l:'c++',v:'10.2.0'},java:{l:'java',v:'15.0.2'}};
+  try{
+    let fileName=lang==='java'?'Main.java':'main.py';
+    let r=await fetch('https://emkc.org/api/v2/piston/execute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({language:map[lang].l,version:map[lang].v,files:[{name:fileName,content:code}],stdin:$('stdin').value})});
+    let d=await r.json(); $('output').textContent=(d.run?.output||'')+(d.run?.stderr?'\nERR: '+d.run.stderr:'')+(d.compile?.stderr?'\nCompile:\n'+d.compile.stderr:''); if(d.compile?.stderr||d.run?.stderr){ $('problems').textContent=d.compile?.stderr||d.run?.stderr; switchTab('prob'); }
+  }catch(e){ $('output').textContent='Error:'+e.message; }
+}
+function openAI(){ document.getElementById('aiPanel').classList.toggle('open'); }
+async function askAI(mode){ if(!puter.auth.isSignedIn()) return alert('Login'); let q=`You are Dev, AI assistant for Seeti Code Editor. Project:${getCtx().projName} File:${getCtx().currentFile.name} Code:${cm.getValue()} Task:${$('aiPrompt').value} Return code in \`\`\``; $('aiResponse').textContent='Dev thinking...'; try{ let s=await puter.ai.chat(q,{model:"claude-sonnet-4",stream:true}); let full=''; for await(let p of s){ if(p?.text){ full+=p.text; $('aiResponse').textContent=full; } } lastAI=full; }catch(e){ $('aiResponse').textContent=e.message; } }
+function applyAICode(){ let m=lastAI.match(/```[a-z]*\n?([\s\S]*?)```/); let code=m?m[1]:lastAI; if(confirm('Dev ka code apply karna hai?')){ cm.setValue(code); projects[curProj].files[curFile].content=code; saveAll(); if(['html','css','javascript'].includes(projects[curProj].files[curFile].lang)) run(); } }
+function exportAll(){ let blob=new Blob([JSON.stringify(projects)],{type:'application/json'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='seeti-backup-'+Date.now()+'.json'; a.click(); }
+function handlePWA(){ if(deferredPrompt) deferredPrompt.prompt(); else alert('Add to Home Screen from menu'); }
+function applyUpdate(){ localStorage.setItem(VER_KEY, APP_VERSION); location.reload(true); }
+function checkUpdate(){ let old=localStorage.getItem(VER_KEY)||'0'; if(old!==APP_VERSION){ document.getElementById('updateBanner').classList.add('show'); document.getElementById('updText').textContent=`🚀 Seeti Update ${old} → ${APP_VERSION} | Dev updated | Data Safe`; } }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').then(reg=>{ reg.addEventListener('updatefound',()=>{ let nw=reg.installing; nw.addEventListener('statechange',()=>{ if(nw.state==='installed' && navigator.serviceWorker.controller){ document.getElementById('updateBanner').classList.add('show'); } }); }); }); }
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; });
+async function init(){ checkUpdate(); let local=JSON.parse(localStorage.getItem(DATA_KEY)||'[]'); if(local.length) projects=local; if(!projects.length) projects=[{name:'SeetiApp',files:[{name:'index.html',lang:'html',content:'<h1>Welcome to Seeti Code Editor 🪈</h1><p>AI: Dev</p>'}]}]; renderAll(); openFile(); setInterval(saveAll,2000); }
+init();
+</script>
+</body>
+</html>
