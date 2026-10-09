@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://rishisoni00.github.io/Seeti-Code-studio-//sitemap.xml
