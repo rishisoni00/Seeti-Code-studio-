@@ -1,0 +1,22 @@
+{
+  "name": "Seeti Code Editor and IDE",
+  "short_name": "Seeti Code",
+  "description": "Seeti Code Editor and IDE - World Best Mobile - Editor for WEB, IDE for Java Python C C++ - Cloud, AI, Real Compiler",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }
+  ]
+}
